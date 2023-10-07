@@ -1,32 +1,28 @@
 from dataclasses import dataclass
 from collections.abc import Iterable
 from itertools import accumulate, starmap
-from functools import reduce
+from typing import NamedTuple
 
-@dataclass
-class Auction:
+class Auction(NamedTuple):
     id: str
     end_time: int
     lock_time: int
     volume_limit: float
     reserve_price: float
 
-@dataclass
-class Bid:
+class Bid(NamedTuple):
     auction_id: str
     timestamp: int
     volume: float
     price: float
     bidder: str
 
-@dataclass
-class BidOutput:
+class BidOutput(NamedTuple):
     bidder: str
     amount_sent: float
     amount_fullfiled: float
 
-@dataclass
-class AuctionOutput:
+class AuctionOutput(NamedTuple):
     bid_outputs: Iterable[BidOutput]
     sorted_bids: Iterable[Bid]
 
