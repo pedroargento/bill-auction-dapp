@@ -36,5 +36,22 @@ class BidsTest(unittest.TestCase):
         price = auction_price(auction_outputs)
         self.assertEqual(price, 0.7)
 
+    def test_generate_bid_vouchers_no_fullfiled(self):
+        price = 0.7
+        output = BidOutput('a', 100, 0)
+        expected = [Voucher('a', TokenOperation.TRANSFER, 100, False)]
+        self.assertEqual(generate_bid_vouchers(output, price), expected)
+
+    def test_generate_bid_vouchers_mint(self):
+        price = 0.7
+        output = BidOutput('a', 100, 70)
+        expected = [Voucher('a', TokenOperation.TRANSFER, 30, False), Voucher('a', TokenOperation.TRANSFER, 70, True), Voucher('a', TokenOperation.MINT, 30, True)]
+        self.assertEqual(generate_bid_vouchers(output, price), expected)
+
+    def test_generate_bid_vouchers_burn(self):
+        price = 1.1
+        output = BidOutput('a', 100, 80)
+        expected = [Voucher('a', TokenOperation.TRANSFER, 20, False), Voucher('a', TokenOperation.TRANSFER, 73, True), Voucher('dapp_address', TokenOperation.BURN, 7, True)]
+        self.assertEqual(generate_bid_vouchers(output, price), expected)
 if __name__ == '__main__':
     unittest.main()
