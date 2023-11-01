@@ -1,7 +1,10 @@
 from collections.abc import Iterable
 from itertools import accumulate, starmap, chain
-from typing import NamedTuple
+from typing import NamedTuple, NewType
 from enum import Enum
+
+
+Address = NewType("Address", str)
 
 class Auction(NamedTuple):
     id: str
@@ -15,10 +18,10 @@ class Bid(NamedTuple):
     timestamp: int
     volume: float
     price: float
-    bidder: str
+    bidder: Address
 
 class BidOutput(NamedTuple):
-    bidder: str
+    bidder: Address
     amount_sent: float
     amount_fullfiled: float
 
@@ -28,7 +31,7 @@ class AuctionOutput(NamedTuple):
 
 TokenOperation = Enum('TokenOperation', ['TRANSFER', 'MINT', 'BURN'])
 class Voucher(NamedTuple):
-    target: str
+    target: Address
     operation: TokenOperation
     amount: float
     timestamp_locked: bool
@@ -63,7 +66,7 @@ def generate_bid_vouchers(output: BidOutput, price: float) -> Iterable[Voucher]:
         elif price > 1:
             burn_amount = (price - 1)*output.amount_fullfiled//price
             voucher_list.append(Voucher(output.bidder, TokenOperation.TRANSFER, output.amount_fullfiled - burn_amount, True))
-            voucher_list.append(Voucher("dapp_address", TokenOperation.BURN, burn_amount, True))
+            voucher_list.append(Voucher(Address("dapp_address"), TokenOperation.BURN, burn_amount, True))
     return voucher_list
 
 def auction_vouchers(outputs: Iterable[BidOutput], price: float) -> Iterable[Voucher]:
