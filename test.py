@@ -40,18 +40,18 @@ class BidsTest(unittest.TestCase):
         price = 0.7
         output = BidOutput(Address('alice'), 100, 0)
         expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 100, False)]
-        self.assertEqual(generate_bid_vouchers(output, price), expected)
+        self.assertEqual(list(generate_bid_vouchers(output, price)), expected)
 
     def test_generate_bid_vouchers_mint(self):
         price = 0.7
         output = BidOutput(Address('alice'), 100, 70)
         expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 30, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 70, True), Voucher(Address('mine_contract'), FunctionCall.MINT, Address('alice'), 30, True)]
-        self.assertEqual(generate_bid_vouchers(output, price), expected)
+        self.assertEqual(list(generate_bid_vouchers(output, price)), expected)
 
     def test_generate_bid_vouchers_burn(self):
         price = 1.1
         output = BidOutput(Address('alice'), 100, 80)
-        expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_address'), int(7), True)]
-        self.assertEqual(generate_bid_vouchers(output, price), expected)
+        expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_contract'), int(7), True)]
+        self.assertEqual(list(generate_bid_vouchers(output, price)), expected)
 if __name__ == '__main__':
     unittest.main()

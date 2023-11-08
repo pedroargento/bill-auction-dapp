@@ -61,24 +61,13 @@ def auction_price(output: AuctionOutput) -> float:
 
 def generate_bid_vouchers(output: BidOutput, price: float) -> Iterable[Voucher]:
     not_fullfiled = output.amount_sent - output.amount_fullfiled
-    voucher_list = []
-    if not_fullfiled != 0:
-        return_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, output.bidder, not_fullfiled, timestamp_locked = False)
-        voucher_list.append(return_voucher)
-    if output.amount_fullfiled > 0:
-        if price < 1:
-            mint_amount = (1 - price)*output.amount_fullfiled//price
-            bid_portion_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=output.bidder, amount=output.amount_fullfiled, timestamp_locked = True)
-            mint_voucher = Voucher(Address("mine_contract"), FunctionCall.MINT, to=output.bidder, amount=mint_amount, timestamp_locked = True)
-            voucher_list.append(bid_portion_voucher)
-            voucher_list.append(mint_voucher)
-        elif price > 1:
-            burn_amount = (price - 1)*output.amount_fullfiled//price
-            bid_portion_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=output.bidder, amount=output.amount_fullfiled - burn_amount, timestamp_locked = True)
-            burn_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=Address("mine_address"), amount=burn_amount, timestamp_locked = True)
-            voucher_list.append(bid_portion_voucher)
-            voucher_list.append(burn_voucher)
-    return voucher_list
+    mint_amount = max((1 - price)*output.amount_fullfiled//price, 0)
+    burn_amount = max((price - 1)*output.amount_fullfiled//price, 0)
+    return_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, output.bidder, not_fullfiled, timestamp_locked = False)
+    bid_portion_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=output.bidder, amount=output.amount_fullfiled - burn_amount, timestamp_locked = True)
+    mint_voucher = Voucher(Address("mine_contract"), FunctionCall.MINT, to=output.bidder, amount=mint_amount, timestamp_locked = True)
+    burn_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=Address('mine_contract'), amount=burn_amount, timestamp_locked = True)
+    return filter(lambda voucher: voucher.amount > 0, [return_voucher, bid_portion_voucher, mint_voucher, burn_voucher])
 
 def auction_vouchers(outputs: Iterable[BidOutput], price: float) -> Iterable[Voucher]:
     return chain(map(lambda output: generate_bid_vouchers(output, price), outputs))
