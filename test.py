@@ -3,12 +3,12 @@ from auction import *
 
 class BidsTest(unittest.TestCase):
     def setUp(self):
-        self.auction = Auction("a", 200, 100, 100, 0.5)
-        self.b1 = Bid("a", 95, 100, 0.6, "aaaa")
-        self.b2 = Bid("a", 95, 100, 0.4, "aaaa")
-        self.b3 = Bid("a", 1100, 110, 0.7, "aaaa")
-        self.b4 = Bid("b", 95, 100, 0.71, "aaaa")
-        self.b5 = Bid("a", 95, 90, 0.8, "abaa")
+        self.auction = Auction("auction_a", 200, 100, 100, 0.5)
+        self.b1 = Bid("auction_a", 95, 100, 0.6, Address("alice"))
+        self.b2 = Bid("auction_a", 95, 100, 0.4, Address("bob"))
+        self.b3 = Bid("auction_a", 1100, 110, 0.7, Address("charles"))
+        self.b4 = Bid("auction_b", 95, 100, 0.71, Address("evan"))
+        self.b5 = Bid("auction_a", 95, 90, 0.8, Address("felicia"))
 
         self.bid_list = [self.b1, self.b2, self.b3, self.b4, self.b5]
 
@@ -38,20 +38,20 @@ class BidsTest(unittest.TestCase):
 
     def test_generate_bid_vouchers_no_fullfiled(self):
         price = 0.7
-        output = BidOutput('a', 100, 0)
-        expected = [Voucher('a', TokenOperation.TRANSFER, 100, False)]
+        output = BidOutput(Address('alice'), 100, 0)
+        expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 100, False)]
         self.assertEqual(generate_bid_vouchers(output, price), expected)
 
     def test_generate_bid_vouchers_mint(self):
         price = 0.7
-        output = BidOutput('a', 100, 70)
-        expected = [Voucher('a', TokenOperation.TRANSFER, 30, False), Voucher('a', TokenOperation.TRANSFER, 70, True), Voucher('a', TokenOperation.MINT, 30, True)]
+        output = BidOutput(Address('alice'), 100, 70)
+        expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 30, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 70, True), Voucher(Address('mine_contract'), FunctionCall.MINT, Address('alice'), 30, True)]
         self.assertEqual(generate_bid_vouchers(output, price), expected)
 
     def test_generate_bid_vouchers_burn(self):
         price = 1.1
-        output = BidOutput('a', 100, 80)
-        expected = [Voucher('a', TokenOperation.TRANSFER, 20, False), Voucher('a', TokenOperation.TRANSFER, 73, True), Voucher('dapp_address', TokenOperation.BURN, 7, True)]
+        output = BidOutput(Address('alice'), 100, 80)
+        expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_address'), int(7), True)]
         self.assertEqual(generate_bid_vouchers(output, price), expected)
 if __name__ == '__main__':
     unittest.main()

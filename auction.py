@@ -6,6 +6,11 @@ from enum import Enum
 
 Address = NewType("Address", str)
 
+
+class Mine(NamedTuple):
+    owner: Address
+    erc20_address: Address
+
 class Auction(NamedTuple):
     id: str
     end_time: int
@@ -29,10 +34,11 @@ class AuctionOutput(NamedTuple):
     bid_outputs: Iterable[BidOutput]
     sorted_bids: Iterable[Bid]
 
-TokenOperation = Enum('TokenOperation', ['TRANSFER', 'MINT', 'BURN'])
+FunctionCall = Enum('FunctionCall', ['TRANSFER', 'MINT'])
 class Voucher(NamedTuple):
-    target: Address
-    operation: TokenOperation
+    target_contract: Address
+    function_call: FunctionCall
+    to: Address
     amount: float
     timestamp_locked: bool
 
@@ -57,16 +63,21 @@ def generate_bid_vouchers(output: BidOutput, price: float) -> Iterable[Voucher]:
     not_fullfiled = output.amount_sent - output.amount_fullfiled
     voucher_list = []
     if not_fullfiled != 0:
-        voucher_list.append(Voucher(output.bidder, TokenOperation.TRANSFER, not_fullfiled, False))
+        return_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, output.bidder, not_fullfiled, timestamp_locked = False)
+        voucher_list.append(return_voucher)
     if output.amount_fullfiled > 0:
         if price < 1:
             mint_amount = (1 - price)*output.amount_fullfiled//price
-            voucher_list.append(Voucher(output.bidder, TokenOperation.TRANSFER, output.amount_fullfiled, True))
-            voucher_list.append(Voucher(output.bidder, TokenOperation.MINT, mint_amount, True))
+            bid_portion_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=output.bidder, amount=output.amount_fullfiled, timestamp_locked = True)
+            mint_voucher = Voucher(Address("mine_contract"), FunctionCall.MINT, to=output.bidder, amount=mint_amount, timestamp_locked = True)
+            voucher_list.append(bid_portion_voucher)
+            voucher_list.append(mint_voucher)
         elif price > 1:
             burn_amount = (price - 1)*output.amount_fullfiled//price
-            voucher_list.append(Voucher(output.bidder, TokenOperation.TRANSFER, output.amount_fullfiled - burn_amount, True))
-            voucher_list.append(Voucher(Address("dapp_address"), TokenOperation.BURN, burn_amount, True))
+            bid_portion_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=output.bidder, amount=output.amount_fullfiled - burn_amount, timestamp_locked = True)
+            burn_voucher = Voucher(Address("token_contract"), FunctionCall.TRANSFER, to=Address("mine_address"), amount=burn_amount, timestamp_locked = True)
+            voucher_list.append(bid_portion_voucher)
+            voucher_list.append(burn_voucher)
     return voucher_list
 
 def auction_vouchers(outputs: Iterable[BidOutput], price: float) -> Iterable[Voucher]:
