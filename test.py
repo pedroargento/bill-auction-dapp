@@ -53,5 +53,13 @@ class BidsTest(unittest.TestCase):
         output = BidOutput(Address('alice'), 100, 80)
         expected = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_contract'), int(7), True)]
         self.assertEqual(list(generate_bid_vouchers(output, price)), expected)
+
+    def test_aggregate_vouchers(self):
+        vouchers = [Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_contract'), int(57), True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_contract'), int(7), True)]
+        aggregated_vouchers = set(aggregate_vouchers(vouchers))
+        expected = set([Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('mine_contract'), int(64), True), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 20, False), Voucher(Address('token_contract'), FunctionCall.TRANSFER, Address('alice'), 73, True)])
+        self.assertEqual(aggregated_vouchers, expected)
+
+
 if __name__ == '__main__':
     unittest.main()

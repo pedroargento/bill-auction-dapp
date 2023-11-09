@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from itertools import accumulate, starmap, chain
+from itertools import accumulate, starmap, chain, groupby
 from typing import NamedTuple, NewType
 from enum import Enum
 
@@ -71,4 +71,10 @@ def generate_bid_vouchers(output: BidOutput, price: float) -> Iterable[Voucher]:
 
 def auction_vouchers(outputs: Iterable[BidOutput], price: float) -> Iterable[Voucher]:
     return chain(map(lambda output: generate_bid_vouchers(output, price), outputs))
+
+def aggregate_vouchers(vouchers: Iterable[Voucher]) -> Iterable[Voucher]:
+    voucher_key=lambda voucher: (voucher.target_contract, voucher.function_call, voucher.to, voucher.timestamp_locked)
+    sorted_vouchers = sorted(vouchers, key = voucher_key)
+    grouped_vouchers = groupby(sorted_vouchers, key = voucher_key)
+    return [Voucher(target_contract = key[0], function_call = key[1], to = key[2], timestamp_locked = key[3], amount = sum((voucher.amount for voucher in group))) for key, group in grouped_vouchers]
 
